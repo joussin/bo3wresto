@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<title>Back office 3w resto</title>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+	<!-- Latest compiled and minified JavaScript -->	
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js" ></script>
+	<script src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.min.js" ></script>
+
+	<link ref="stylesheet" href="https://cdn.datatables.net/1.10.12/css/dataTables.bootstrap.min.css" />
+
+
+	<script src="script.js"></script>
+
+	<script src="https://www.gstatic.com/firebasejs/3.1.0/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/3.1.0/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/3.1.0/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/3.1.0/firebase-database.js"></script>
+
+ 	<script>
+ 
+ 
+    var config = {
+      apiKey: "AIzaSyDrar8UpY99cKQaBEvgylurq2MogD8F3vY",
+      authDomain: "troiswresto.firebaseio.com",
+      databaseURL: "https://troiswresto.firebaseio.com/",
+      storageBucket: "bucket.appspot.com",
+    };
+
+
+    var myApp = firebase.initializeApp(config);
+	
+
+	$( document ).ready(function() {
+			
+
+			//--------------------------------
+			var dt_reviews = $('.liste-review ').DataTable();
+			var dt_restos = $('.liste-resto ').DataTable({
+		        /*"createdRow": function ( row, data, index ) {
+		             
+		               
+					var bg = $( row ).css('background-color')
+
+		             $( row ).animate({
+					    backgroundColor: "#ffff99",
+					  }, 500, function() {
+
+					  $( row ).animate({
+					    backgroundColor: bg,
+					  }, 500)
+					 });
+		        }*/
+		    });
+
+			troiswResto.init(myApp)
+
+			firebase.database().ref('/data/resto/').on('value', function(snapshot) {
+ 
+				
+				var restoArray = []
+				var reviewsArray = []
+
+				snapshot.forEach(function(childSnapshot) {
+
+					var restokey = childSnapshot.key
+
+					var resto_temp = []
+
+					 
+					var resto =  childSnapshot.val().name
+					var address =  childSnapshot.val().address
+					var description =  childSnapshot.val().description
+					var location =  childSnapshot.val().location
+					var price =  childSnapshot.val().price
+					var validate =  childSnapshot.val().validate
+
+					resto_temp["id"] = restokey
+					resto_temp["name"] = resto
+					resto_temp["address"] = address
+					resto_temp["description"] = description
+					resto_temp["location"] = location
+					resto_temp["price"] = price
+					resto_temp["validate"] = validate
+
+					restoArray.push(resto_temp)
+
+
+					var reviews = childSnapshot.child("reviews");
+				
+
+					reviews.forEach(function(child){
+
+						var review_temp = []
+			 
+				 		var key = child.key 
+						var message =  child.val().message
+						var date =  child.val().date
+						var rating =  child.val().rating
+						var reviewerName =  child.val().reviewerName
+						var reviewerId =  child.val().reviewerId
+						var validate = child.val().validate
+
+						review_temp["resto"] = resto
+						review_temp["restokey"] = restokey	
+						review_temp["key"] = key	
+						review_temp["message"] = message
+						review_temp["date"] = date
+						review_temp["rating"] = rating
+						review_temp["reviewerName"] = reviewerName
+						review_temp["reviewerId"] = reviewerId
+						review_temp["validate"] = validate
+
+						reviewsArray.push(review_temp)
+					})
+				})
+				troiswResto.restos =  restoArray
+				troiswResto.reviews =  reviewsArray
+				troiswResto.addReviews(dt_reviews)
+				troiswResto.addRestos(dt_restos)
+
+				$("#nb-resto").text(restoArray.length )
+				$("#nb-review").text(reviewsArray.length )
+
+				
+			});
+
+			//--------------------------------
+
+	 		
+	 });
+  </script>
+
+  <link rel="stylesheet" href="css.css">
+
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+
+		 
+			<div class="page-header">
+			  <h1>Dashboard <small>appli 3W resto</small></h1>
+			</div>
+			
+			<div class="row">
+
+				<div class="col-xs-3 col-md-3 col-sm-3 col-lg-3">
+					<div class="panel panel-info">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-cutlery fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge" id="nb-resto" >0</div>
+                                    <div>Restos!</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a data-toggle="tab"  href="#home">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+
+
+ 				<div class="col-xs-3 col-md-3 col-sm-3 col-lg-3">
+					<div class="panel panel-success">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-comments fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge" id="nb-review" >0</div>
+                                    <div>Comments!</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a data-toggle="tab"  href="#menu1">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+
+
+			</div>
+			
+
+			<br />
+			<br />
+
+			<ul class="nav nav-tabs">
+			  <li class="active"><a data-toggle="tab" href="#home">Restos</a></li>
+			  <li><a data-toggle="tab" href="#menu1">Reviews</a></li>
+			   
+			</ul>
+
+			<div class="tab-content">
+			  <div id="home" class="tab-pane fade in active">
+					<h1>Liste des restos</h1>
+					<hr>
+					<table  class="liste-resto table table-striped">
+						<thead>
+							<tr>
+								<th>id resto</th>
+								<th>address</th>
+								<th>description</th>
+								<th>location</th>
+								<th>name</th>
+								<th>price</th>
+								<th>validate</th>
+								<th class="tbl-action" ><i class='fa fa-cog' ></i> </th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+
+					
+			  </div>
+			  <div id="menu1" class="tab-pane fade">
+			 
+					<h1>Liste des reviews</h1>
+					<hr />
+					<table  class="liste-review table table-striped">
+						<thead>
+							<tr>
+								<th>resto</th>
+								<th>id review</th>
+								<th>date</th>
+								<th>username</th>
+								<th>message</th>
+								<th>rating</th>
+								<th>validate</th>
+								<th class="tbl-action" ><i class='fa fa-cog' ></i> </th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+
+			  </div>
+			 
+			</div>
+
+
+		</div>
+	</div>
+</body>
+</html>
+
